@@ -44,7 +44,21 @@ with open(requirements_path, 'r') as fh_:
         line = fh_.readline()
 
 # check dependencies
-pkg_resources.require(dependencies)
+try:
+    # Try to enforce the pinned requirements from requirements.txt. If there's a
+    # VersionConflict (common when the virtualenv has slightly different, but
+    # still workable versions installed), don't abort the whole script — print a
+    # helpful warning and continue. This avoids the program crashing at import
+    # time while still informing the user about mismatches.
+    pkg_resources.require(dependencies)
+except pkg_resources.VersionConflict as exc:
+    # Don't raise here — many users keep newer compatible packages installed.
+    # Print a concise warning so the user can decide whether to reinstall pins.
+    print("WARNING: package version conflict detected when checking requirements:", exc)
+    print("Continuing with the currently-installed packages. If you want to enforce exact pins, run:\n  pip install -r requirements.txt\n")
+except Exception as exc:  # fallback for other issues (file format, parsing)
+    print("WARNING: could not verify requirements due to:", exc)
+    print("Continuing without strict requirement checks.")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -284,7 +298,7 @@ if __name__ == '__main__':
 
     # set race parameter file name and if the parameter file is given in the simple format (i.e. specifically for the
     # basic race simulation) or not (i.e. it is a parameter file intended for the use with the normal race simulation)
-    # -> in the latter case, the parameters will be converted automatically for the given driver initials
+    # -> in the latter case, the parameters will be converted automatically for the given driver initials   
     race_pars_file_ = "pars_YasMarina_2017.ini"
     simple_format_ = True
     driver_initials_ = ""  # only relevant if simple_format_ is False
@@ -314,7 +328,7 @@ if __name__ == '__main__':
     # use_print:                set if prints to console should be used or not (does not suppress hints/warnings)
     # use_print_result:         set if result should be printed to console or not
 
-    use_plot = False
+    use_plot = True
     use_print = True
     use_print_result = True
 
